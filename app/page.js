@@ -1,0 +1,211 @@
+"use client";
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import ProductCard from "@/components/ProductCard";
+import { THEME_META } from "@/lib/theme";
+
+const MapView = dynamic(() => import("@/components/MapView"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm">
+      Cargando mapa…
+    </div>
+  ),
+});
+
+const TEMAS = ["naturaleza", "cultura", "gastronomico"];
+
+export default function Home() {
+  const [data, setData] = useState(null);
+  const [tema, setTema] = useState("naturaleza");
+  const [search, setSearch] = useState("");
+  const [soloValidados, setSoloValidados] = useState(false);
+  const [nivelFiltro, setNivelFiltro] = useState("Todos");
+  const [prioridadFiltro, setPrioridadFiltro] = useState("Todas");
+  const [selectedKey, setSelectedKey] = useState(null);
+
+  useEffect(() => {
+    fetch("/data/data.json")
+      .then((r) => r.json())
+      .then(setData)
+      .catch(() => setData([]));
+  }, []);
+
+  useEffect(() => {
+    setSelectedKey(null);
+  }, [tema]);
+
+  const filteredByTema = useMemo(() => {
+    if (!data) return [];
+    let rows = data.filter((r) => r.tema === tema && r.lat != null && r.lng != null);
+    if (soloValidados) rows = rows.filter((r) => r.validado);
+    if (nivelFiltro !== "Todos") rows = rows.filter((r) => r.nivel === nivelFiltro);
+    if (prioridadFiltro !== "Todas") rows = rows.filter((r) => r.prioridad === prioridadFiltro);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      rows = rows.filter(
+        (r) =>
+          (r.producto_corregido || r.producto || "").toLowerCase().includes(q) ||
+          (r.entidad || "").toLowerCase().includes(q) ||
+          (r.tipologia_propuesta || r.tipologia || "").toLowerCase().includes(q)
+      );
+    }
+    return rows;
+  }, [data, tema, soloValidados, nivelFiltro, prioridadFiltro, search]);
+
+  const locations = useMemo(() => {
+    const map = new Map();
+    for (const r of filteredByTema) {
+      const key = `${r.entidad}__${r.lat.toFixed(3)}__${r.lng.toFixed(3)}`;
+      if (!map.has(key)) {
+        map.set(key, { key, entidad: r.entidad, lat: r.lat, lng: r.lng, precision: r.precision, count: 0 });
+      }
+      map.get(key).count += 1;
+    }
+    return Array.from(map.values());
+  }, [filteredByTema]);
+
+  const cards = useMemo(() => {
+    if (selectedKey) {
+      return filteredByTema.filter((r) => {
+        const key = `${r.entidad}__${r.lat.toFixed(3)}__${r.lng.toFixed(3)}`;
+        return key === selectedKey;
+      });
+    }
+    return filteredByTema.slice(0, 60);
+  }, [filteredByTema, selectedKey]);
+
+  const selectedLocation = locations.find((l) => l.key === selectedKey);
+  const meta = THEME_META[tema];
+
+  return (
+    <div className="h-full flex flex-col">
+      <header className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-lg font-semibold text-slate-900">
+              ICTRC 2026 · Mapa de oferta turística
+            </h1>
+            <p className="text-xs text-slate-500">
+              Inventario de Colombia por Naturaleza, Cultura y Gastronómico · Atlántico validado con
+              detalle · resto del país como reporte preliminar
+            </p>
+          </div>
+          <div className="flex gap-1 rounded-full bg-slate-100 p-1 self-start">
+            {TEMAS.map((t) => {
+              const m = THEME_META[t];
+              const active = t === tema;
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTema(t)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                    active ? "text-white" : "text-slate-600 hover:bg-white"
+                  }`}
+                  style={active ? { background: m.color } : undefined}
+                >
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar producto, municipio o tipología…"
+            className="w-full max-w-xs rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-slate-400"
+          />
+          <select
+            value={nivelFiltro}
+            onChange={(e) => setNivelFiltro(e.target.value)}
+            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+          >
+            <option>Todos</option>
+            <option>Departamento</option>
+            <option>Capital</option>
+            <option>Municipio</option>
+          </select>
+          <select
+            value={prioridadFiltro}
+            onChange={(e) => setPrioridadFiltro(e.target.value)}
+            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+          >
+            <option value="Todas">Toda prioridad</option>
+            <option value="ALTA">Prioridad alta</option>
+            <option value="MEDIA">Prioridad media</option>
+            <option value="OK">OK</option>
+          </select>
+          <label className="flex items-center gap-1.5 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={soloValidados}
+              onChange={(e) => setSoloValidados(e.target.checked)}
+              className="rounded border-slate-300"
+            />
+            Solo validados (Atlántico)
+          </label>
+          {selectedKey && (
+            <button
+              onClick={() => setSelectedKey(null)}
+              className="text-sm font-medium text-slate-500 hover:text-slate-800"
+            >
+              ✕ Quitar selección de mapa
+            </button>
+          )}
+          <span className="ml-auto text-xs text-slate-400">
+            {filteredByTema.length.toLocaleString("es-CO")} productos · {locations.length.toLocaleString("es-CO")} ubicaciones
+          </span>
+        </div>
+      </header>
+
+      <main className="flex flex-1 min-h-0 flex-col lg:flex-row">
+        <div className="h-[45vh] lg:h-auto lg:flex-1">
+          {data ? (
+            <MapView
+              locations={locations}
+              activeTema={tema}
+              selectedKey={selectedKey}
+              onSelect={(key) => setSelectedKey((prev) => (prev === key ? null : key))}
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm">
+              Cargando datos…
+            </div>
+          )}
+        </div>
+
+        <aside className="w-full lg:w-[420px] border-t lg:border-t-0 lg:border-l border-slate-200 bg-slate-50 flex flex-col min-h-0">
+          <div className="px-4 py-3 border-b border-slate-200 bg-white">
+            <h2 className="text-sm font-semibold text-slate-800">
+              {selectedLocation ? selectedLocation.entidad : `Fichas de ${meta.label}`}
+            </h2>
+            <p className="text-xs text-slate-500">
+              {selectedLocation
+                ? `${cards.length} producto${cards.length !== 1 ? "s" : ""} en esta ubicación`
+                : "Haz clic en un punto del mapa o usa el buscador"}
+            </p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {cards.length === 0 && (
+              <p className="text-sm text-slate-400 px-2 py-8 text-center">
+                No hay productos que coincidan con los filtros actuales.
+              </p>
+            )}
+            {cards.map((item) => (
+              <ProductCard key={item.id} item={item} />
+            ))}
+            {!selectedLocation && filteredByTema.length > cards.length && (
+              <p className="text-xs text-slate-400 text-center py-2">
+                Mostrando {cards.length} de {filteredByTema.length.toLocaleString("es-CO")} — filtra o
+                selecciona un punto del mapa para ver más.
+              </p>
+            )}
+          </div>
+        </aside>
+      </main>
+    </div>
+  );
+}
