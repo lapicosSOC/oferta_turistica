@@ -176,8 +176,7 @@ export default function Home() {
               ICTRC 2026 · Mapa de oferta turística
             </h1>
             <p className="text-xs text-slate-500">
-              Inventario de Colombia por Naturaleza, Cultura y Gastronómico · Atlántico validado con
-              detalle · resto del país como reporte preliminar
+              Inventario de la oferta turística de Colombia · información preliminar
             </p>
           </div>
         </div>
