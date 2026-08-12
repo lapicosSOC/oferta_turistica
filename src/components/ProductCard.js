@@ -5,52 +5,52 @@ export default function ProductCard({ item }) {
   const theme = THEME_META[item.tema];
 
   return (
-    <div
-      className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white pl-4 pr-4 py-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-200/60"
-    >
+    <div className="group relative overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(11,37,64,0.05)] transition-all hover:-translate-y-px hover:border-slate-300 hover:shadow-[0_8px_24px_-8px_rgba(11,37,64,0.18)]">
       <span
-        className="absolute inset-y-0 left-0 w-1"
+        className="absolute inset-y-0 left-0 w-[3px]"
         style={{ background: theme.color }}
         aria-hidden="true"
       />
 
       <div className="flex items-start justify-between gap-2">
         <span
-          className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
+          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
           style={{ background: theme.soft, color: theme.ring }}
         >
           {theme.label}
         </span>
-        <div className="flex flex-wrap gap-1 justify-end">
-          {item.validado ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-navy-100 bg-navy-900 px-2 py-0.5 text-[11px] font-medium text-white">
-              ✓ Validado
-            </span>
-          ) : (
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-              Sin validar
-            </span>
-          )}
-        </div>
+        {item.validado ? (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-navy-900 px-2 py-0.5 text-[10px] font-medium text-white">
+            ✓ Validado
+          </span>
+        ) : (
+          <span className="shrink-0 rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+            Sin validar
+          </span>
+        )}
       </div>
 
       <h3 className="mt-2.5 font-heading text-sm font-semibold leading-snug text-navy-900">
         {item.producto_corregido || item.producto}
       </h3>
 
-      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
-        <span>
-          <span className="text-slate-400">Tipo:</span> {item.tipo_propuesto || item.tipo || "—"}
-        </span>
-        <span>
-          <span className="text-slate-400">Tipología:</span> {item.tipologia_propuesta || item.tipologia || "—"}
-        </span>
-      </div>
-
-      <div className="mt-1.5 flex items-center gap-1 text-xs text-slate-500">
-        <span className="text-slate-400">📍</span> {item.entidad}
-        {item.nivel && <span className="text-slate-400">· {item.nivel}</span>}
-      </div>
+      <dl className="mt-2.5 space-y-1 text-xs">
+        <div className="flex gap-2">
+          <dt className="w-16 shrink-0 text-slate-400">Tipo</dt>
+          <dd className="text-slate-700">{item.tipo_propuesto || item.tipo || "—"}</dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="w-16 shrink-0 text-slate-400">Tipología</dt>
+          <dd className="text-slate-700">{item.tipologia_propuesta || item.tipologia || "—"}</dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="w-16 shrink-0 text-slate-400">Ubicación</dt>
+          <dd className="text-slate-700">
+            {item.entidad}
+            {item.nivel && <span className="text-slate-400"> · {item.nivel}</span>}
+          </dd>
+        </div>
+      </dl>
 
       {item.producto_compartido === "SI" && (
         <div className="mt-2.5 rounded-lg bg-gold-100 border border-gold-400/40 px-2.5 py-1.5 text-xs text-gold-600">

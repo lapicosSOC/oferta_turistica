@@ -26,6 +26,9 @@ export default function Home() {
   const [tipologiaFiltro, setTipologiaFiltro] = useState("Todos");
   const [selectedKey, setSelectedKey] = useState(null);
   const [mapBounds, setMapBounds] = useState(null);
+  // Cambia en cada "Restablecer" para reencuadrar el mapa aunque `mapBounds` ya
+  // fuera null: si no, un zoom manual sobrevive al reinicio de filtros.
+  const [resetToken, setResetToken] = useState(0);
 
   useEffect(() => {
     fetch("/data/data.json")
@@ -50,16 +53,17 @@ export default function Home() {
     setTipologiaFiltro("Todos");
     setSelectedKey(null);
     setMapBounds(null);
+    setResetToken((n) => n + 1);
   };
 
-  const filteredByTema = useMemo(() => {
+  // Filtros en cascada: cada nivel alimenta las opciones del siguiente, de modo que
+  // los desplegables solo ofrecen valores que realmente devuelven resultados.
+  const rowsSinTipo = useMemo(() => {
     if (!data) return [];
-    let rows = data.filter((r) => temasFiltro.includes(r.tema) && r.lat != null && r.lng != null);
+    let rows = data.filter((r) => r.lat != null && r.lng != null);
     if (soloValidados) rows = rows.filter((r) => r.validado);
     if (departamentoFiltro !== "Todos") rows = rows.filter((r) => r.departamento === departamentoFiltro);
     if (municipioFiltro !== "Todos") rows = rows.filter((r) => r.entidad === municipioFiltro);
-    if (tipoFiltro !== "Todos") rows = rows.filter((r) => r.tipo === tipoFiltro);
-    if (tipologiaFiltro !== "Todos") rows = rows.filter((r) => (r.tipologia_propuesta || r.tipologia) === tipologiaFiltro);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       rows = rows.filter(
@@ -70,7 +74,40 @@ export default function Home() {
       );
     }
     return rows;
-  }, [data, temasFiltro, soloValidados, departamentoFiltro, municipioFiltro, tipoFiltro, tipologiaFiltro, search]);
+  }, [data, soloValidados, departamentoFiltro, municipioFiltro, search]);
+
+  const rowsSinTipologia = useMemo(
+    () => (tipoFiltro === "Todos" ? rowsSinTipo : rowsSinTipo.filter((r) => r.tipo === tipoFiltro)),
+    [rowsSinTipo, tipoFiltro]
+  );
+
+  const rowsSinTema = useMemo(
+    () =>
+      tipologiaFiltro === "Todos"
+        ? rowsSinTipologia
+        : rowsSinTipologia.filter((r) => (r.tipologia_propuesta || r.tipologia) === tipologiaFiltro),
+    [rowsSinTipologia, tipologiaFiltro]
+  );
+
+  const filteredByTema = useMemo(
+    () => rowsSinTema.filter((r) => temasFiltro.includes(r.tema)),
+    [rowsSinTema, temasFiltro]
+  );
+
+  // Cuántos productos aportaría cada tema con los demás filtros aplicados: es el
+  // número que va en cada chip, por eso se cuenta antes de filtrar por tema.
+  const temaCounts = useMemo(() => {
+    const counts = Object.fromEntries(TEMAS.map((t) => [t, 0]));
+    for (const r of rowsSinTema) {
+      if (counts[r.tema] != null) counts[r.tema] += 1;
+    }
+    return counts;
+  }, [rowsSinTema]);
+
+  const validadosCount = useMemo(
+    () => filteredByTema.reduce((n, r) => n + (r.validado ? 1 : 0), 0),
+    [filteredByTema]
+  );
 
   const locations = useMemo(() => {
     const map = new Map();
@@ -110,19 +147,23 @@ export default function Home() {
     return municipiosDelDepto;
   }, [data, departamentoFiltro]);
 
-  const tipos = useMemo(() => {
-    if (!filteredByTema.length) return [];
-    return [...new Set(filteredByTema.map((r) => r.tipo))].filter(Boolean).sort();
-  }, [filteredByTema]);
+  const tipos = useMemo(
+    () =>
+      [...new Set(
+        rowsSinTipo.filter((r) => temasFiltro.includes(r.tema)).map((r) => r.tipo)
+      )].filter(Boolean).sort(),
+    [rowsSinTipo, temasFiltro]
+  );
 
-  const tipologias = useMemo(() => {
-    if (!filteredByTema.length) return [];
-    let datos = filteredByTema;
-    if (tipoFiltro !== "Todos") {
-      datos = datos.filter((r) => r.tipo === tipoFiltro);
-    }
-    return [...new Set(datos.map((r) => r.tipologia_propuesta || r.tipologia))].filter(Boolean).sort();
-  }, [filteredByTema, tipoFiltro]);
+  const tipologias = useMemo(
+    () =>
+      [...new Set(
+        rowsSinTipologia
+          .filter((r) => temasFiltro.includes(r.tema))
+          .map((r) => r.tipologia_propuesta || r.tipologia)
+      )].filter(Boolean).sort(),
+    [rowsSinTipologia, temasFiltro]
+  );
 
   useEffect(() => {
     if (departamentoFiltro !== "Todos" && data) {
@@ -194,49 +235,79 @@ export default function Home() {
           aria-hidden="true"
         />
 
-        <div className="relative px-4 py-4 sm:px-8 sm:py-6">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-5">
-            <div>
-              <p className="font-heading text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-400">
-                Inventario Turístico Nacional
-              </p>
-              <h1 className="mt-1.5 font-heading text-xl font-bold tracking-tight text-white sm:text-3xl">
-                ICTRC 2026 · Mapa de oferta turística
+        <div className="relative px-4 py-5 sm:px-8 sm:py-7">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+            <div className="flex items-start gap-4">
+              <svg
+                viewBox="0 0 40 40"
+                className="hidden h-11 w-11 shrink-0 text-gold-400 lg:block"
+                aria-hidden="true"
+              >
+                <circle cx="20" cy="20" r="19" fill="none" stroke="currentColor" strokeOpacity="0.3" />
+                <circle cx="20" cy="20" r="12.5" fill="none" stroke="currentColor" strokeOpacity="0.55" />
+                <circle cx="20" cy="20" r="5" fill="currentColor" />
+              </svg>
+
+              <h1 className="max-w-3xl text-balance font-heading text-xl font-bold leading-[1.25] tracking-tight text-white sm:text-[26px]">
+                <span className="text-gold-400">ICTRC 2026</span>
+                <span className="text-white/25"> · </span>
+                Inventario de la oferta turística de Colombia
+                <span className="text-white/25"> · </span>
+                <span className="font-normal text-navy-100/70">Información preliminar.</span>
               </h1>
-              <p className="mt-1.5 hidden max-w-2xl text-sm leading-relaxed text-navy-100/75 sm:block">
-                Inventario de Colombia por Naturaleza, Cultura y Gastronomía. Atlántico validado con
-                detalle · resto del país como reporte preliminar.
-              </p>
             </div>
 
-            <div className="flex gap-5 sm:gap-8">
+            <div className="flex shrink-0 items-end gap-6 sm:gap-8">
               <div>
-                <div className="font-heading text-xl font-bold text-white sm:text-2xl">
+                <div className="font-heading text-[44px] font-bold leading-none text-white sm:text-5xl">
                   {filteredByTema.length.toLocaleString("es-CO")}
                 </div>
-                <div className="text-[11px] uppercase tracking-wide text-navy-100/60">Productos</div>
+                <div className="mt-2 text-xs text-navy-100/60">Productos</div>
               </div>
-              <div>
-                <div className="font-heading text-xl font-bold text-white sm:text-2xl">
-                  {locations.length.toLocaleString("es-CO")}
+
+              <div className="hidden h-12 w-px bg-white/12 sm:block" aria-hidden="true" />
+
+              <div className="flex gap-6 sm:gap-8">
+                <div>
+                  <div className="font-heading text-2xl font-semibold leading-none text-white">
+                    {locations.length.toLocaleString("es-CO")}
+                  </div>
+                  <div className="mt-2 text-xs text-navy-100/60">Ubicaciones</div>
                 </div>
-                <div className="text-[11px] uppercase tracking-wide text-navy-100/60">Ubicaciones</div>
-              </div>
-              <div className="hidden sm:block">
-                <div className="font-heading text-xl font-bold text-white sm:text-2xl">
-                  {departamentos.length}
+                <div>
+                  <div className="font-heading text-2xl font-semibold leading-none text-white">
+                    {validadosCount.toLocaleString("es-CO")}
+                  </div>
+                  <div className="mt-2 text-xs text-navy-100/60">Validados</div>
                 </div>
-                <div className="text-[11px] uppercase tracking-wide text-navy-100/60">Departamentos</div>
+                <div className="hidden sm:block">
+                  <div className="font-heading text-2xl font-semibold leading-none text-white">
+                    {departamentos.length}
+                  </div>
+                  <div className="mt-2 text-xs text-navy-100/60">Departamentos</div>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Composición por tema de lo que está en el mapa. Las cifras exactas viven
+            en los chips de abajo, así que la franja nunca es el único canal. */}
+        <div className="relative flex h-1.5 w-full gap-[2px] bg-navy-950">
+          {TEMAS.filter((t) => temasFiltro.includes(t) && temaCounts[t] > 0).map((t) => (
+            <div
+              key={t}
+              className="h-full"
+              style={{ flexGrow: temaCounts[t], background: THEME_META[t].color }}
+            />
+          ))}
         </div>
       </header>
 
       <div className="border-b border-slate-200 bg-white px-4 py-3 sm:px-8">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+            <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
               {TEMAS.map((t) => {
                 const m = THEME_META[t];
                 const active = temasFiltro.includes(t);
@@ -244,13 +315,26 @@ export default function Home() {
                   <button
                     key={t}
                     onClick={() => toggleTema(t)}
-                    className={`rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
-                      active ? "text-white shadow-sm" : "text-slate-500 hover:bg-white hover:text-slate-800"
+                    aria-pressed={active}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                      active
+                        ? "text-white shadow-sm"
+                        : "text-slate-500 hover:bg-white hover:text-slate-800"
                     }`}
                     style={active ? { background: m.color } : undefined}
                     title={`${active ? "Quitar" : "Agregar"} ${m.label}`}
                   >
+                    {!active && (
+                      <span
+                        className="h-2 w-2 rounded-full opacity-45"
+                        style={{ background: m.color }}
+                        aria-hidden="true"
+                      />
+                    )}
                     {m.label}
+                    <span className={active ? "text-white/70" : "text-slate-400"}>
+                      {temaCounts[t].toLocaleString("es-CO")}
+                    </span>
                   </button>
                 );
               })}
@@ -340,6 +424,7 @@ export default function Home() {
               selectedKey={selectedKey}
               onSelect={(key) => setSelectedKey((prev) => (prev === key ? null : key))}
               bounds={mapBounds}
+              resetToken={resetToken}
             />
           ) : (
             <div className="h-full w-full flex flex-col items-center justify-center gap-2 text-slate-400">
@@ -349,21 +434,36 @@ export default function Home() {
           )}
         </div>
 
-        <aside className="w-full lg:w-[420px] lg:flex-none border-t lg:border-t-0 lg:border-l border-slate-200 bg-slate-50 flex flex-col">
-          <div className="px-4 py-3.5 border-b border-slate-200 bg-white">
-            <h2 className="font-heading text-sm font-semibold text-navy-900">
-              {selectedLocation ? selectedLocation.entidad : "Fichas de producto"}
-            </h2>
-            <p className="text-xs text-slate-500">
-              {selectedLocation
-                ? `${cards.length} producto${cards.length !== 1 ? "s" : ""} en esta ubicación`
-                : "Haz clic en un punto del mapa o usa el buscador"}
-            </p>
+        <aside className="w-full lg:w-[420px] lg:flex-none border-t lg:border-t-0 lg:border-l border-slate-200 bg-slate-100/70 flex flex-col">
+          <div className="border-b border-slate-200 bg-white px-5 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  {selectedLocation ? "Ubicación seleccionada" : "Resultados"}
+                </p>
+                <h2 className="mt-1 truncate font-heading text-base font-semibold text-navy-900">
+                  {selectedLocation ? selectedLocation.entidad : "Fichas de producto"}
+                </h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {selectedLocation
+                    ? `${cards.length.toLocaleString("es-CO")} producto${cards.length !== 1 ? "s" : ""} en esta ubicación`
+                    : "Haz clic en un punto del mapa o usa el buscador"}
+                </p>
+              </div>
+              {selectedLocation && (
+                <button
+                  onClick={() => setSelectedKey(null)}
+                  className="shrink-0 rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-500 transition-colors hover:border-slate-300 hover:text-navy-900"
+                >
+                  Ver todo
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          <div className="flex-1 space-y-2.5 overflow-y-auto p-4">
             {cards.length === 0 && (
-              <div className="flex flex-col items-center gap-2 px-2 py-12 text-center">
-                <span className="text-3xl opacity-40">🗺️</span>
+              <div className="flex flex-col items-center gap-2 px-2 py-16 text-center">
+                <span className="text-3xl opacity-30">🗺️</span>
                 <p className="text-sm text-slate-400">
                   No hay productos que coincidan con los filtros actuales.
                 </p>
@@ -373,7 +473,7 @@ export default function Home() {
               <ProductCard key={item.id} item={item} />
             ))}
             {!selectedLocation && filteredByTema.length > cards.length && (
-              <p className="text-xs text-slate-400 text-center py-2">
+              <p className="px-2 py-3 text-center text-xs leading-relaxed text-slate-400">
                 Mostrando {cards.length} de {filteredByTema.length.toLocaleString("es-CO")} — filtra o
                 selecciona un punto del mapa para ver más.
               </p>
