@@ -257,26 +257,25 @@ export default function Home() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar…"
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-slate-400"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-slate-400 flex-1 min-w-xs"
             />
-
-            {(temasFiltro.length < TEMAS.length || search || soloValidados || departamentoFiltro !== "Todos" || municipioFiltro !== "Todos" || tipoFiltro !== "Todos" || tipologiaFiltro !== "Todos") && (
-              <button
-                onClick={restablecerFiltros}
-                className="text-sm font-medium text-slate-500 hover:text-slate-800 px-2 py-1.5 rounded-lg hover:bg-slate-100"
-              >
-                ↻ Restablecer
-              </button>
-            )}
 
             {selectedKey && (
               <button
                 onClick={() => setSelectedKey(null)}
                 className="text-sm font-medium text-slate-500 hover:text-slate-800"
               >
-                ✕ Quitar selección de mapa
+                ✕ Quitar selección
               </button>
             )}
+
+            <button
+              onClick={restablecerFiltros}
+              disabled={temasFiltro.length === TEMAS.length && !search && !soloValidados && departamentoFiltro === "Todos" && municipioFiltro === "Todos" && tipoFiltro === "Todos" && tipologiaFiltro === "Todos" && !selectedKey}
+              className="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors disabled:text-slate-300 disabled:cursor-default enabled:text-slate-600 enabled:hover:bg-slate-100 enabled:hover:text-slate-900"
+            >
+              ↻ Restablecer
+            </button>
           </div>
         </div>
       </header>
