@@ -117,8 +117,12 @@ export default function Home() {
 
   const tipologias = useMemo(() => {
     if (!filteredByTema.length) return [];
-    return [...new Set(filteredByTema.map((r) => r.tipologia_propuesta || r.tipologia))].filter(Boolean).sort();
-  }, [filteredByTema]);
+    let datos = filteredByTema;
+    if (tipoFiltro !== "Todos") {
+      datos = datos.filter((r) => r.tipo === tipoFiltro);
+    }
+    return [...new Set(datos.map((r) => r.tipologia_propuesta || r.tipologia))].filter(Boolean).sort();
+  }, [filteredByTema, tipoFiltro]);
 
   useEffect(() => {
     if (departamentoFiltro !== "Todos" && data) {
@@ -153,6 +157,10 @@ export default function Home() {
       }
     }
   }, [municipioFiltro, data]);
+
+  useEffect(() => {
+    setTipologiaFiltro("Todos");
+  }, [tipoFiltro]);
 
   return (
     <div className="h-full flex flex-col">
