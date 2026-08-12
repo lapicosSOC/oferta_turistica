@@ -64,9 +64,9 @@ export default function Home() {
       const q = search.trim().toLowerCase();
       rows = rows.filter(
         (r) =>
-          (r.producto_corregido || r.producto || "").toLowerCase().includes(q) ||
-          (r.entidad || "").toLowerCase().includes(q) ||
-          (r.tipologia_propuesta || r.tipologia || "").toLowerCase().includes(q)
+          String(r.producto_corregido || r.producto || "").toLowerCase().includes(q) ||
+          String(r.entidad || "").toLowerCase().includes(q) ||
+          String(r.tipologia_propuesta || r.tipologia || "").toLowerCase().includes(q)
       );
     }
     return rows;
