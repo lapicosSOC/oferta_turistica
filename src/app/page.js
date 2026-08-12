@@ -138,6 +138,22 @@ export default function Home() {
     setMunicipioFiltro("Todos");
   }, [departamentoFiltro, data]);
 
+  useEffect(() => {
+    if (municipioFiltro !== "Todos" && data) {
+      const municipioData = data.filter((r) => r.entidad === municipioFiltro);
+      if (municipioData.length > 0) {
+        const lats = municipioData.map((r) => r.lat);
+        const lngs = municipioData.map((r) => r.lng);
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+        const padding = Math.max(maxLat - minLat, maxLng - minLng) * 0.3;
+        setMapBounds([[minLat - padding, minLng - padding], [maxLat + padding, maxLng + padding]]);
+      }
+    }
+  }, [municipioFiltro, data]);
+
   return (
     <div className="h-full flex flex-col">
       <header className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
