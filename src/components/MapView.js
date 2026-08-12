@@ -1,9 +1,16 @@
 "use client";
-import { useMemo } from "react";
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from "react-leaflet";
+import { useMemo, useEffect, useRef } from "react";
+import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet";
 import { THEME_META } from "@/lib/theme";
 
-export default function MapView({ locations, filteredData, selectedKey, onSelect }) {
+function MapContent({ locations, filteredData, selectedKey, onSelect, bounds }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (bounds) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [bounds, map]);
   const temasByLocation = useMemo(() => {
     const map = new Map();
     for (const item of filteredData) {
@@ -19,17 +26,7 @@ export default function MapView({ locations, filteredData, selectedKey, onSelect
   }, [filteredData]);
 
   return (
-    <MapContainer
-      center={[4.6, -74.2]}
-      zoom={6}
-      minZoom={5}
-      maxBounds={[
-        [-5.5, -84],
-        [16, -60],
-      ]}
-      className="h-full w-full"
-      preferCanvas
-    >
+    <>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -67,6 +64,30 @@ export default function MapView({ locations, filteredData, selectedKey, onSelect
           </CircleMarker>
         );
       })}
+    </>
+  );
+}
+
+export default function MapView({ locations, filteredData, selectedKey, onSelect, bounds }) {
+  return (
+    <MapContainer
+      center={[4.6, -74.2]}
+      zoom={6}
+      minZoom={5}
+      maxBounds={[
+        [-5.5, -84],
+        [16, -60],
+      ]}
+      className="h-full w-full"
+      preferCanvas
+    >
+      <MapContent
+        locations={locations}
+        filteredData={filteredData}
+        selectedKey={selectedKey}
+        onSelect={onSelect}
+        bounds={bounds}
+      />
     </MapContainer>
   );
 }

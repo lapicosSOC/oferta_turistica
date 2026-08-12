@@ -20,11 +20,12 @@ export default function Home() {
   const [temasFiltro, setTemasFiltro] = useState(TEMAS);
   const [search, setSearch] = useState("");
   const [soloValidados, setSoloValidados] = useState(false);
-  const [nivelFiltro, setNivelFiltro] = useState("Todos");
   const [departamentoFiltro, setDepartamentoFiltro] = useState("Todos");
+  const [municipioFiltro, setMunicipioFiltro] = useState("Todos");
   const [tipoFiltro, setTipoFiltro] = useState("Todos");
   const [tipologiaFiltro, setTipologiaFiltro] = useState("Todos");
   const [selectedKey, setSelectedKey] = useState(null);
+  const [mapBounds, setMapBounds] = useState(null);
 
   useEffect(() => {
     fetch("/data/data.json")
@@ -43,19 +44,20 @@ export default function Home() {
     setTemasFiltro(TEMAS);
     setSearch("");
     setSoloValidados(false);
-    setNivelFiltro("Todos");
     setDepartamentoFiltro("Todos");
+    setMunicipioFiltro("Todos");
     setTipoFiltro("Todos");
     setTipologiaFiltro("Todos");
     setSelectedKey(null);
+    setMapBounds(null);
   };
 
   const filteredByTema = useMemo(() => {
     if (!data) return [];
     let rows = data.filter((r) => temasFiltro.includes(r.tema) && r.lat != null && r.lng != null);
     if (soloValidados) rows = rows.filter((r) => r.validado);
-    if (nivelFiltro !== "Todos") rows = rows.filter((r) => r.nivel === nivelFiltro);
     if (departamentoFiltro !== "Todos") rows = rows.filter((r) => r.departamento === departamentoFiltro);
+    if (municipioFiltro !== "Todos") rows = rows.filter((r) => r.entidad === municipioFiltro);
     if (tipoFiltro !== "Todos") rows = rows.filter((r) => r.tipo === tipoFiltro);
     if (tipologiaFiltro !== "Todos") rows = rows.filter((r) => (r.tipologia_propuesta || r.tipologia) === tipologiaFiltro);
     if (search.trim()) {
@@ -68,7 +70,7 @@ export default function Home() {
       );
     }
     return rows;
-  }, [data, temasFiltro, soloValidados, nivelFiltro, departamentoFiltro, tipoFiltro, tipologiaFiltro, search]);
+  }, [data, temasFiltro, soloValidados, departamentoFiltro, municipioFiltro, tipoFiltro, tipologiaFiltro, search]);
 
   const locations = useMemo(() => {
     const map = new Map();
@@ -99,6 +101,15 @@ export default function Home() {
     return [...new Set(data.map((r) => r.departamento))].filter(Boolean).sort();
   }, [data]);
 
+  const municipios = useMemo(() => {
+    if (!data) return [];
+    if (departamentoFiltro === "Todos") return [];
+    const municipiosDelDepto = [...new Set(data
+      .filter((r) => r.departamento === departamentoFiltro)
+      .map((r) => r.entidad))].filter(Boolean).sort();
+    return municipiosDelDepto;
+  }, [data, departamentoFiltro]);
+
   const tipos = useMemo(() => {
     if (!filteredByTema.length) return [];
     return [...new Set(filteredByTema.map((r) => r.tipo))].filter(Boolean).sort();
@@ -108,6 +119,24 @@ export default function Home() {
     if (!filteredByTema.length) return [];
     return [...new Set(filteredByTema.map((r) => r.tipologia_propuesta || r.tipologia))].filter(Boolean).sort();
   }, [filteredByTema]);
+
+  useEffect(() => {
+    if (departamentoFiltro !== "Todos" && data) {
+      const deptoData = data.filter((r) => r.departamento === departamentoFiltro);
+      if (deptoData.length > 0) {
+        const lats = deptoData.map((r) => r.lat);
+        const lngs = deptoData.map((r) => r.lng);
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+        setMapBounds([[minLat - 0.2, minLng - 0.2], [maxLat + 0.2, maxLng + 0.2]]);
+      }
+    } else {
+      setMapBounds(null);
+    }
+    setMunicipioFiltro("Todos");
+  }, [departamentoFiltro, data]);
 
   return (
     <div className="h-full flex flex-col">
@@ -125,13 +154,6 @@ export default function Home() {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar producto, municipio o tipología…"
-            className="w-full max-w-xs rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-slate-400"
-          />
-
           <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
             {TEMAS.map((t) => {
               const m = THEME_META[t];
@@ -153,17 +175,6 @@ export default function Home() {
           </div>
 
           <select
-            value={nivelFiltro}
-            onChange={(e) => setNivelFiltro(e.target.value)}
-            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-          >
-            <option>Todos</option>
-            <option>Departamento</option>
-            <option>Capital</option>
-            <option>Municipio</option>
-          </select>
-
-          <select
             value={departamentoFiltro}
             onChange={(e) => setDepartamentoFiltro(e.target.value)}
             className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
@@ -173,6 +184,19 @@ export default function Home() {
               <option key={d} value={d}>{d}</option>
             ))}
           </select>
+
+          {municipios.length > 0 && (
+            <select
+              value={municipioFiltro}
+              onChange={(e) => setMunicipioFiltro(e.target.value)}
+              className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+            >
+              <option value="Todos">Todos los municipios</option>
+              {municipios.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          )}
 
           <select
             value={tipoFiltro}
@@ -206,7 +230,14 @@ export default function Home() {
             Solo validados
           </label>
 
-          {(temasFiltro.length < TEMAS.length || search || soloValidados || nivelFiltro !== "Todos" || departamentoFiltro !== "Todos" || tipoFiltro !== "Todos" || tipologiaFiltro !== "Todos") && (
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar…"
+            className="max-w-xs rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-slate-400"
+          />
+
+          {(temasFiltro.length < TEMAS.length || search || soloValidados || departamentoFiltro !== "Todos" || municipioFiltro !== "Todos" || tipoFiltro !== "Todos" || tipologiaFiltro !== "Todos") && (
             <button
               onClick={restablecerFiltros}
               className="text-sm font-medium text-slate-500 hover:text-slate-800 px-2 py-1.5 rounded-lg hover:bg-slate-100"
@@ -238,6 +269,7 @@ export default function Home() {
               filteredData={filteredByTema}
               selectedKey={selectedKey}
               onSelect={(key) => setSelectedKey((prev) => (prev === key ? null : key))}
+              bounds={mapBounds}
             />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm">
