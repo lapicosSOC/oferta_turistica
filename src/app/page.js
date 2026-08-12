@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import ProductCard from "@/components/ProductCard";
+import { CloseIcon, MapPinIcon, ResetIcon, SearchIcon } from "@/components/icons";
 import { THEME_META } from "@/lib/theme";
 
 const MapView = dynamic(() => import("@/components/MapView"), {
@@ -103,11 +104,6 @@ export default function Home() {
     }
     return counts;
   }, [rowsSinTema]);
-
-  const validadosCount = useMemo(
-    () => filteredByTema.reduce((n, r) => n + (r.validado ? 1 : 0), 0),
-    [filteredByTema]
-  );
 
   const locations = useMemo(() => {
     const map = new Map();
@@ -220,9 +216,9 @@ export default function Home() {
 
   return (
     <div className="flex min-h-full flex-col lg:h-full">
-      <header className="relative overflow-hidden bg-navy-900 text-white">
+      <header className="relative overflow-hidden bg-gradient-to-r from-navy-950 via-navy-900 to-navy-800 text-white">
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
           style={{
             backgroundImage:
               "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
@@ -231,64 +227,26 @@ export default function Home() {
           aria-hidden="true"
         />
         <div
-          className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-gold-400/10 blur-3xl"
+          className="pointer-events-none absolute -right-16 -top-40 h-80 w-[32rem] rounded-full bg-gold-400/12 blur-3xl"
           aria-hidden="true"
         />
 
-        <div className="relative px-4 py-5 sm:px-8 sm:py-7">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
-            <div className="flex items-start gap-4">
-              <svg
-                viewBox="0 0 40 40"
-                className="hidden h-11 w-11 shrink-0 text-gold-400 lg:block"
-                aria-hidden="true"
-              >
-                <circle cx="20" cy="20" r="19" fill="none" stroke="currentColor" strokeOpacity="0.3" />
-                <circle cx="20" cy="20" r="12.5" fill="none" stroke="currentColor" strokeOpacity="0.55" />
-                <circle cx="20" cy="20" r="5" fill="currentColor" />
-              </svg>
+        <div className="relative flex items-center gap-4 px-8 py-5">
+          <svg viewBox="0 0 40 40" className="h-10 w-10 shrink-0 text-gold-400" aria-hidden="true">
+            <circle cx="20" cy="20" r="19" fill="none" stroke="currentColor" strokeOpacity="0.28" />
+            <circle cx="20" cy="20" r="12.5" fill="none" stroke="currentColor" strokeOpacity="0.5" />
+            <circle cx="20" cy="20" r="5" fill="currentColor" />
+          </svg>
 
-              <h1 className="max-w-3xl text-balance font-heading text-xl font-bold leading-[1.25] tracking-tight text-white sm:text-[26px]">
-                <span className="text-gold-400">ICTRC 2026</span>
-                <span className="text-white/25"> · </span>
-                Inventario de la oferta turística de Colombia
-                <span className="text-white/25"> · </span>
-                <span className="font-normal text-navy-100/70">Información preliminar.</span>
-              </h1>
-            </div>
-
-            <div className="flex shrink-0 items-end gap-6 sm:gap-8">
-              <div>
-                <div className="font-heading text-[44px] font-bold leading-none text-white sm:text-5xl">
-                  {filteredByTema.length.toLocaleString("es-CO")}
-                </div>
-                <div className="mt-2 text-xs text-navy-100/60">Productos</div>
-              </div>
-
-              <div className="hidden h-12 w-px bg-white/12 sm:block" aria-hidden="true" />
-
-              <div className="flex gap-6 sm:gap-8">
-                <div>
-                  <div className="font-heading text-2xl font-semibold leading-none text-white">
-                    {locations.length.toLocaleString("es-CO")}
-                  </div>
-                  <div className="mt-2 text-xs text-navy-100/60">Ubicaciones</div>
-                </div>
-                <div>
-                  <div className="font-heading text-2xl font-semibold leading-none text-white">
-                    {validadosCount.toLocaleString("es-CO")}
-                  </div>
-                  <div className="mt-2 text-xs text-navy-100/60">Validados</div>
-                </div>
-                <div className="hidden sm:block">
-                  <div className="font-heading text-2xl font-semibold leading-none text-white">
-                    {departamentos.length}
-                  </div>
-                  <div className="mt-2 text-xs text-navy-100/60">Departamentos</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* clamp mantiene el titular en una sola línea entre ~1200px y pantallas
+              anchas, que es donde se ve mejor equilibrado. */}
+          <h1 className="font-heading font-bold leading-tight tracking-tight text-white text-[clamp(1.1rem,2.05vw,2rem)]">
+            <span className="text-gold-400">ICTRC 2026</span>
+            <span className="text-white/25"> · </span>
+            Inventario de la oferta turística de Colombia
+            <span className="text-white/25"> · </span>
+            <span className="font-normal text-navy-100/65">Información preliminar.</span>
+          </h1>
         </div>
 
         {/* Composición por tema de lo que está en el mapa. Las cifras exactas viven
@@ -304,8 +262,8 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="border-b border-slate-200 bg-white px-4 py-3 sm:px-8">
-        <div className="flex flex-col gap-3">
+      <div className="relative z-10 border-b border-slate-200 bg-white px-8 py-4 shadow-[0_1px_3px_rgba(11,37,64,0.04)]">
+        <div className="flex flex-col gap-3.5">
           <div className="flex flex-wrap items-center gap-2.5">
             <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
               {TEMAS.map((t) => {
@@ -340,24 +298,33 @@ export default function Home() {
               })}
             </div>
 
-            <div className="relative flex-1 min-w-[220px]">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                🔎
+            <div className="relative min-w-[260px] flex-1">
+              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                <SearchIcon />
               </span>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar producto, municipio o tipología…"
-                className="w-full rounded-lg border border-slate-200 py-1.5 pl-8 pr-3 text-sm outline-none transition-colors focus:border-navy-600 focus:ring-2 focus:ring-navy-600/10"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50/60 py-2 pl-10 pr-9 text-sm outline-none transition-all placeholder:text-slate-400 focus:border-navy-600 focus:bg-white focus:ring-4 focus:ring-navy-600/8"
               />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  aria-label="Limpiar búsqueda"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-navy-900"
+                >
+                  <CloseIcon />
+                </button>
+              )}
             </div>
 
-            <label className="flex items-center gap-1.5 text-sm text-slate-600 whitespace-nowrap">
+            <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-slate-600 transition-colors hover:text-navy-900">
               <input
                 type="checkbox"
                 checked={soloValidados}
                 onChange={(e) => setSoloValidados(e.target.checked)}
-                className="rounded border-slate-300 text-navy-700 focus:ring-navy-600/30"
+                className="h-4 w-4 rounded border-slate-300 text-navy-700 focus:ring-navy-600/30"
               />
               Solo validados
             </label>
@@ -365,18 +332,20 @@ export default function Home() {
             {selectedKey && (
               <button
                 onClick={() => setSelectedKey(null)}
-                className="text-sm font-medium text-slate-500 hover:text-slate-800 whitespace-nowrap"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-navy-900"
               >
-                ✕ Quitar selección
+                <CloseIcon />
+                Quitar selección
               </button>
             )}
 
             <button
               onClick={restablecerFiltros}
               disabled={!filtrosActivos}
-              className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:text-slate-300 disabled:cursor-default enabled:text-navy-700 enabled:hover:bg-navy-100 enabled:hover:text-navy-900"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:cursor-default disabled:text-slate-300 enabled:text-navy-700 enabled:hover:bg-navy-100 enabled:hover:text-navy-900"
             >
-              ↻ Restablecer
+              <ResetIcon />
+              Restablecer
             </button>
           </div>
 
@@ -444,10 +413,22 @@ export default function Home() {
                 <h2 className="mt-1 truncate font-heading text-base font-semibold text-navy-900">
                   {selectedLocation ? selectedLocation.entidad : "Fichas de producto"}
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  {selectedLocation
-                    ? `${cards.length.toLocaleString("es-CO")} producto${cards.length !== 1 ? "s" : ""} en esta ubicación`
-                    : "Haz clic en un punto del mapa o usa el buscador"}
+                <p className="mt-1 text-xs text-slate-500">
+                  {selectedLocation ? (
+                    `${cards.length.toLocaleString("es-CO")} producto${cards.length !== 1 ? "s" : ""} en esta ubicación`
+                  ) : (
+                    <>
+                      <span className="font-medium text-navy-900">
+                        {filteredByTema.length.toLocaleString("es-CO")}
+                      </span>{" "}
+                      productos
+                      <span className="text-slate-300"> · </span>
+                      <span className="font-medium text-navy-900">
+                        {locations.length.toLocaleString("es-CO")}
+                      </span>{" "}
+                      ubicaciones
+                    </>
+                  )}
                 </p>
               </div>
               {selectedLocation && (
@@ -462,8 +443,8 @@ export default function Home() {
           </div>
           <div className="flex-1 space-y-2.5 overflow-y-auto p-4">
             {cards.length === 0 && (
-              <div className="flex flex-col items-center gap-2 px-2 py-16 text-center">
-                <span className="text-3xl opacity-30">🗺️</span>
+              <div className="flex flex-col items-center gap-3 px-2 py-16 text-center">
+                <MapPinIcon className="h-9 w-9 text-slate-300" />
                 <p className="text-sm text-slate-400">
                   No hay productos que coincidan con los filtros actuales.
                 </p>
@@ -486,15 +467,20 @@ export default function Home() {
 }
 
 function FilterSelect({ label, value, onChange, options, allLabel }) {
+  const activo = value !== "Todos";
   return (
-    <label className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+    <label className="flex flex-col gap-1">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">
         {label}
       </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm text-slate-700 outline-none transition-colors focus:border-navy-600 focus:ring-2 focus:ring-navy-600/10"
+        className={`min-w-[9rem] rounded-lg border px-2.5 py-1.5 text-sm outline-none transition-all focus:border-navy-600 focus:ring-4 focus:ring-navy-600/8 ${
+          activo
+            ? "border-navy-600/40 bg-navy-100/50 font-medium text-navy-900"
+            : "border-slate-200 bg-slate-50/60 text-slate-700 hover:border-slate-300"
+        }`}
       >
         <option value="Todos">{allLabel}</option>
         {options.map((o) => (

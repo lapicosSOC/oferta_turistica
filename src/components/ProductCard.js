@@ -1,4 +1,5 @@
 "use client";
+import { CheckIcon, ExternalLinkIcon } from "@/components/icons";
 import { THEME_META } from "@/lib/theme";
 
 export default function ProductCard({ item }) {
@@ -21,7 +22,8 @@ export default function ProductCard({ item }) {
         </span>
         {item.validado ? (
           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-navy-900 px-2 py-0.5 text-[10px] font-medium text-white">
-            ✓ Validado
+            <CheckIcon />
+            Validado
           </span>
         ) : (
           <span className="shrink-0 rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-400">
@@ -66,9 +68,10 @@ export default function ProductCard({ item }) {
               href={item.url_oficial}
               target="_blank"
               rel="noreferrer"
-              className="font-medium text-navy-700 hover:text-navy-900 hover:underline"
+              className="inline-flex items-center gap-1 font-medium text-navy-700 hover:text-navy-900 hover:underline"
             >
-              Sitio oficial ↗
+              Sitio oficial
+              <ExternalLinkIcon />
             </a>
           )}
           {item.fuentes_web && (
@@ -76,9 +79,10 @@ export default function ProductCard({ item }) {
               href={item.fuentes_web.split("\n")[0]}
               target="_blank"
               rel="noreferrer"
-              className="text-slate-500 hover:underline"
+              className="inline-flex items-center gap-1 text-slate-500 hover:text-navy-900 hover:underline"
             >
-              Fuente ↗
+              Fuente
+              <ExternalLinkIcon />
             </a>
           )}
         </div>

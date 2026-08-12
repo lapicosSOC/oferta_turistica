@@ -5,15 +5,37 @@ import { THEME_META } from "@/lib/theme";
 
 const radiusFor = (count) => Math.min(6 + Math.sqrt(count) * 2.2, 34);
 
+// Encuadre por defecto ceñido a donde vive el inventario (lat 1.1–12.6,
+// lng -79–-67.5), no a los límites políticos: así el país llena el marco en
+// lugar de dejar océano vacío. San Andrés queda fuera del encuadre inicial —son
+// 3 registros— pero se alcanza filtrando por ese departamento o desplazando.
+const COLOMBIA_BOUNDS = [
+  [0.8, -79.4],
+  [13.0, -67.2],
+];
+
+// Los topónimos van en un panel propio por encima de los círculos (z-index 450,
+// entre overlayPane y markerPane) para que no queden tapados por los datos.
+// Los topónimos se dibujan en `markerPane` (z-index 600), que Leaflet ya crea
+// por defecto y queda por encima del canvas de los círculos (overlayPane, 400)
+// y por debajo de los tooltips (650). Así los nombres de ciudad no quedan
+// sepultados bajo los datos, sin necesidad de registrar un panel propio.
+// `pointer-events: none` (ver globals.css) deja pasar el clic a los marcadores.
+function LabelsLayer() {
+  return (
+    <TileLayer
+      pane="markerPane"
+      className="mapa-etiquetas"
+      url="https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png"
+    />
+  );
+}
+
 function MapContent({ locations, filteredData, selectedKey, onSelect, bounds, resetToken }) {
   const map = useMap();
 
   useEffect(() => {
-    if (bounds) {
-      map.fitBounds(bounds, { padding: [50, 50] });
-    } else {
-      map.setView([4.6, -74.2], 6);
-    }
+    map.fitBounds(bounds || COLOMBIA_BOUNDS, { padding: [50, 50] });
   }, [bounds, resetToken, map]);
 
   useEffect(() => {
@@ -41,8 +63,8 @@ function MapContent({ locations, filteredData, selectedKey, onSelect, bounds, re
   return (
     <>
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
       />
       {locations.map((loc) => {
         const temas = temasByLocation.get(loc.key) || [];
@@ -99,6 +121,8 @@ function MapContent({ locations, filteredData, selectedKey, onSelect, bounds, re
           pathOptions={{ color: "#0b2540", weight: 1.5, opacity: 0.55, fill: false }}
         />
       )}
+
+      <LabelsLayer />
     </>
   );
 }
