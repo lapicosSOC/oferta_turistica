@@ -85,14 +85,14 @@ export default function Home() {
   }, [filteredByTema]);
 
   const cards = useMemo(() => {
-    if (selectedKey) {
+    if (selectedKey && locations.some((l) => l.key === selectedKey)) {
       return filteredByTema.filter((r) => {
         const key = `${r.entidad}__${r.lat.toFixed(3)}__${r.lng.toFixed(3)}`;
         return key === selectedKey;
       });
     }
     return filteredByTema.slice(0, 60);
-  }, [filteredByTema, selectedKey]);
+  }, [filteredByTema, selectedKey, locations]);
 
   const selectedLocation = locations.find((l) => l.key === selectedKey);
 
@@ -167,22 +167,75 @@ export default function Home() {
     setTipologiaFiltro("Todos");
   }, [temasFiltro]);
 
+  const filtrosActivos =
+    temasFiltro.length !== TEMAS.length ||
+    !!search ||
+    soloValidados ||
+    departamentoFiltro !== "Todos" ||
+    municipioFiltro !== "Todos" ||
+    tipoFiltro !== "Todos" ||
+    tipologiaFiltro !== "Todos" ||
+    !!selectedKey;
+
   return (
-    <div className="h-full flex flex-col">
-      <header className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900">
-              ICTRC 2026 · Mapa de oferta turística
-            </h1>
-            <p className="text-xs text-slate-500">
-              Inventario de la oferta turística de Colombia · información preliminar
-            </p>
+    <div className="flex min-h-full flex-col lg:h-full">
+      <header className="relative overflow-hidden bg-navy-900 text-white">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+            backgroundSize: "18px 18px",
+          }}
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-gold-400/10 blur-3xl"
+          aria-hidden="true"
+        />
+
+        <div className="relative px-4 py-4 sm:px-8 sm:py-6">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-5">
+            <div>
+              <p className="font-heading text-[11px] font-semibold uppercase tracking-[0.22em] text-gold-400">
+                Inventario Turístico Nacional
+              </p>
+              <h1 className="mt-1.5 font-heading text-xl font-bold tracking-tight text-white sm:text-3xl">
+                ICTRC 2026 · Mapa de oferta turística
+              </h1>
+              <p className="mt-1.5 hidden max-w-2xl text-sm leading-relaxed text-navy-100/75 sm:block">
+                Inventario de Colombia por Naturaleza, Cultura y Gastronomía. Atlántico validado con
+                detalle · resto del país como reporte preliminar.
+              </p>
+            </div>
+
+            <div className="flex gap-5 sm:gap-8">
+              <div>
+                <div className="font-heading text-xl font-bold text-white sm:text-2xl">
+                  {filteredByTema.length.toLocaleString("es-CO")}
+                </div>
+                <div className="text-[11px] uppercase tracking-wide text-navy-100/60">Productos</div>
+              </div>
+              <div>
+                <div className="font-heading text-xl font-bold text-white sm:text-2xl">
+                  {locations.length.toLocaleString("es-CO")}
+                </div>
+                <div className="text-[11px] uppercase tracking-wide text-navy-100/60">Ubicaciones</div>
+              </div>
+              <div className="hidden sm:block">
+                <div className="font-heading text-xl font-bold text-white sm:text-2xl">
+                  {departamentos.length}
+                </div>
+                <div className="text-[11px] uppercase tracking-wide text-navy-100/60">Departamentos</div>
+              </div>
+            </div>
           </div>
         </div>
+      </header>
 
-        <div className="mt-3 flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="border-b border-slate-200 bg-white px-4 py-3 sm:px-8">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
               {TEMAS.map((t) => {
                 const m = THEME_META[t];
@@ -191,8 +244,8 @@ export default function Home() {
                   <button
                     key={t}
                     onClick={() => toggleTema(t)}
-                    className={`rounded px-2 py-1.5 text-sm font-medium transition-colors ${
-                      active ? "text-white" : "text-slate-600 hover:bg-white"
+                    className={`rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
+                      active ? "text-white shadow-sm" : "text-slate-500 hover:bg-white hover:text-slate-800"
                     }`}
                     style={active ? { background: m.color } : undefined}
                     title={`${active ? "Quitar" : "Agregar"} ${m.label}`}
@@ -203,79 +256,32 @@ export default function Home() {
               })}
             </div>
 
-            <select
-              value={departamentoFiltro}
-              onChange={(e) => setDepartamentoFiltro(e.target.value)}
-              className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-            >
-              <option value="Todos">Todos los departamentos</option>
-              {departamentos.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
+            <div className="relative flex-1 min-w-[220px]">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                🔎
+              </span>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar producto, municipio o tipología…"
+                className="w-full rounded-lg border border-slate-200 py-1.5 pl-8 pr-3 text-sm outline-none transition-colors focus:border-navy-600 focus:ring-2 focus:ring-navy-600/10"
+              />
+            </div>
 
-            {municipios.length > 0 && (
-              <select
-                value={municipioFiltro}
-                onChange={(e) => setMunicipioFiltro(e.target.value)}
-                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-              >
-                <option value="Todos">Todos los municipios</option>
-                {municipios.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
-            )}
-
-            <select
-              value={tipoFiltro}
-              onChange={(e) => setTipoFiltro(e.target.value)}
-              className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-            >
-              <option value="Todos">Todos los tipos</option>
-              {tipos.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-
-            <select
-              value={tipologiaFiltro}
-              onChange={(e) => setTipologiaFiltro(e.target.value)}
-              className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-            >
-              <option value="Todos">Todas las tipologías</option>
-              {tipologias.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-
-            <label className="flex items-center gap-1.5 text-sm text-slate-600">
+            <label className="flex items-center gap-1.5 text-sm text-slate-600 whitespace-nowrap">
               <input
                 type="checkbox"
                 checked={soloValidados}
                 onChange={(e) => setSoloValidados(e.target.checked)}
-                className="rounded border-slate-300"
+                className="rounded border-slate-300 text-navy-700 focus:ring-navy-600/30"
               />
               Solo validados
             </label>
 
-            <span className="ml-auto text-xs text-slate-400">
-              {filteredByTema.length.toLocaleString("es-CO")} productos · {locations.length.toLocaleString("es-CO")} ubicaciones
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar…"
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-slate-400 flex-1 min-w-xs"
-            />
-
             {selectedKey && (
               <button
                 onClick={() => setSelectedKey(null)}
-                className="text-sm font-medium text-slate-500 hover:text-slate-800"
+                className="text-sm font-medium text-slate-500 hover:text-slate-800 whitespace-nowrap"
               >
                 ✕ Quitar selección
               </button>
@@ -283,17 +289,50 @@ export default function Home() {
 
             <button
               onClick={restablecerFiltros}
-              disabled={temasFiltro.length === TEMAS.length && !search && !soloValidados && departamentoFiltro === "Todos" && municipioFiltro === "Todos" && tipoFiltro === "Todos" && tipologiaFiltro === "Todos" && !selectedKey}
-              className="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors disabled:text-slate-300 disabled:cursor-default enabled:text-slate-600 enabled:hover:bg-slate-100 enabled:hover:text-slate-900"
+              disabled={!filtrosActivos}
+              className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:text-slate-300 disabled:cursor-default enabled:text-navy-700 enabled:hover:bg-navy-100 enabled:hover:text-navy-900"
             >
               ↻ Restablecer
             </button>
           </div>
-        </div>
-      </header>
 
-      <main className="flex flex-1 min-h-0 flex-col lg:flex-row">
-        <div className="h-[45vh] lg:h-auto lg:flex-1">
+          <div className="flex flex-wrap items-end gap-2.5">
+            <FilterSelect
+              label="Departamento"
+              value={departamentoFiltro}
+              onChange={setDepartamentoFiltro}
+              options={departamentos}
+              allLabel="Todos los departamentos"
+            />
+            {municipios.length > 0 && (
+              <FilterSelect
+                label="Municipio"
+                value={municipioFiltro}
+                onChange={setMunicipioFiltro}
+                options={municipios}
+                allLabel="Todos los municipios"
+              />
+            )}
+            <FilterSelect
+              label="Tipo"
+              value={tipoFiltro}
+              onChange={setTipoFiltro}
+              options={tipos}
+              allLabel="Todos los tipos"
+            />
+            <FilterSelect
+              label="Tipología"
+              value={tipologiaFiltro}
+              onChange={setTipologiaFiltro}
+              options={tipologias}
+              allLabel="Todas las tipologías"
+            />
+          </div>
+        </div>
+      </div>
+
+      <main className="flex flex-col lg:flex-1 lg:min-h-0 lg:flex-row">
+        <div className="h-[340px] shrink-0 lg:h-auto lg:min-h-0 lg:flex-1 border-b lg:border-b-0 border-slate-200">
           {data ? (
             <MapView
               locations={locations}
@@ -303,16 +342,17 @@ export default function Home() {
               bounds={mapBounds}
             />
           ) : (
-            <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm">
-              Cargando datos…
+            <div className="h-full w-full flex flex-col items-center justify-center gap-2 text-slate-400">
+              <span className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-navy-700" />
+              <span className="text-sm">Cargando mapa…</span>
             </div>
           )}
         </div>
 
-        <aside className="w-full lg:w-[420px] border-t lg:border-t-0 lg:border-l border-slate-200 bg-slate-50 flex flex-col min-h-0">
-          <div className="px-4 py-3 border-b border-slate-200 bg-white">
-            <h2 className="text-sm font-semibold text-slate-800">
-              {selectedLocation ? selectedLocation.entidad : "Fichas de productos"}
+        <aside className="w-full lg:w-[420px] lg:flex-none border-t lg:border-t-0 lg:border-l border-slate-200 bg-slate-50 flex flex-col">
+          <div className="px-4 py-3.5 border-b border-slate-200 bg-white">
+            <h2 className="font-heading text-sm font-semibold text-navy-900">
+              {selectedLocation ? selectedLocation.entidad : "Fichas de producto"}
             </h2>
             <p className="text-xs text-slate-500">
               {selectedLocation
@@ -322,9 +362,12 @@ export default function Home() {
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {cards.length === 0 && (
-              <p className="text-sm text-slate-400 px-2 py-8 text-center">
-                No hay productos que coincidan con los filtros actuales.
-              </p>
+              <div className="flex flex-col items-center gap-2 px-2 py-12 text-center">
+                <span className="text-3xl opacity-40">🗺️</span>
+                <p className="text-sm text-slate-400">
+                  No hay productos que coincidan con los filtros actuales.
+                </p>
+              </div>
             )}
             {cards.map((item) => (
               <ProductCard key={item.id} item={item} />
@@ -339,5 +382,27 @@ export default function Home() {
         </aside>
       </main>
     </div>
+  );
+}
+
+function FilterSelect({ label, value, onChange, options, allLabel }) {
+  return (
+    <label className="flex flex-col gap-0.5">
+      <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm text-slate-700 outline-none transition-colors focus:border-navy-600 focus:ring-2 focus:ring-navy-600/10"
+      >
+        <option value="Todos">{allLabel}</option>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

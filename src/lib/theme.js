@@ -1,7 +1,22 @@
 export const THEME_META = {
-  naturaleza: { label: "Naturaleza", color: "#16a34a", soft: "#dcfce7", ring: "#15803d" },
-  cultura: { label: "Cultura", color: "#9333ea", soft: "#f3e8ff", ring: "#7e22ce" },
-  gastronomico: { label: "Gastronómico", color: "#ea580c", soft: "#ffedd5", ring: "#c2410c" },
+  naturaleza: {
+    label: "Naturaleza",
+    color: "#0d7d63",
+    soft: "#e0f5ee",
+    ring: "#0a5f4c",
+  },
+  cultura: {
+    label: "Cultura",
+    color: "#7b3a8f",
+    soft: "#f4e8f8",
+    ring: "#5e2c70",
+  },
+  gastronomico: {
+    label: "Gastronómico",
+    color: "#b6580f",
+    soft: "#fdead9",
+    ring: "#8f440a",
+  },
 };
 
 export const NIVEL_META = {

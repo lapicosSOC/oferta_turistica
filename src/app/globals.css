@@ -1,8 +1,32 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+
+  --color-navy-950: #071a2c;
+  --color-navy-900: #0b2540;
+  --color-navy-800: #11395a;
+  --color-navy-700: #194d76;
+  --color-navy-600: #24628f;
+  --color-navy-100: #dfe9f2;
+
+  --color-gold-600: #a3771f;
+  --color-gold-500: #c4922f;
+  --color-gold-400: #d7ac54;
+  --color-gold-100: #f7ecd8;
+
+  --color-naturaleza: #0d7d63;
+  --color-naturaleza-soft: #e0f5ee;
+  --color-cultura: #7b3a8f;
+  --color-cultura-soft: #f4e8f8;
+  --color-gastronomico: #b6580f;
+  --color-gastronomico-soft: #fdead9;
+}
+
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f5f6f8;
+  --foreground: #0b2540;
 }
 
 body {
@@ -10,15 +34,45 @@ body {
   color: var(--foreground);
 }
 
+::selection {
+  background: var(--color-gold-400);
+  color: var(--color-navy-950);
+}
+
+/* Leaflet overrides for an institutional, elegant map */
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background: #eaf3fb;
-  font-family: inherit;
+  background: #e7edf3;
+  font-family: var(--font-sans);
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(2px);
+}
+
+.leaflet-control-zoom a {
+  color: var(--color-navy-900) !important;
+  border-radius: 8px !important;
 }
 
 .leaflet-popup-content-wrapper {
   border-radius: 12px;
+  box-shadow: 0 12px 32px -8px rgba(11, 37, 64, 0.35);
+}
+
+.leaflet-tooltip {
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 20px -6px rgba(11, 37, 64, 0.4) !important;
+  padding: 8px 10px !important;
+  font-family: var(--font-sans);
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: #fff !important;
 }
 
 ::-webkit-scrollbar {
@@ -26,8 +80,11 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #c7d0da;
   border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a9b6c4;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
