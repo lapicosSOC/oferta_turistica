@@ -1,8 +1,23 @@
 "use client";
+import { useMemo } from "react";
 import { MapContainer, TileLayer, CircleMarker, Tooltip } from "react-leaflet";
 import { THEME_META } from "@/lib/theme";
 
-export default function MapView({ locations, activeTema, selectedKey, onSelect }) {
+export default function MapView({ locations, filteredData, selectedKey, onSelect }) {
+  const temasByLocation = useMemo(() => {
+    const map = new Map();
+    for (const item of filteredData) {
+      const key = `${item.entidad}__${item.lat.toFixed(3)}__${item.lng.toFixed(3)}`;
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      if (!map.get(key).includes(item.tema)) {
+        map.get(key).push(item.tema);
+      }
+    }
+    return map;
+  }, [filteredData]);
+
   return (
     <MapContainer
       center={[4.6, -74.2]}
@@ -20,7 +35,9 @@ export default function MapView({ locations, activeTema, selectedKey, onSelect }
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
       {locations.map((loc) => {
-        const meta = THEME_META[activeTema];
+        const temas = temasByLocation.get(loc.key) || [];
+        const primaryTema = temas[0] || "naturaleza";
+        const meta = THEME_META[primaryTema];
         const radius = Math.min(6 + Math.sqrt(loc.count) * 2.2, 34);
         const isSelected = loc.key === selectedKey;
         return (

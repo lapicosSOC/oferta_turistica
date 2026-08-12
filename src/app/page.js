@@ -17,11 +17,13 @@ const TEMAS = ["naturaleza", "cultura", "gastronomico"];
 
 export default function Home() {
   const [data, setData] = useState(null);
-  const [tema, setTema] = useState("naturaleza");
+  const [temasFiltro, setTemasFiltro] = useState(TEMAS);
   const [search, setSearch] = useState("");
   const [soloValidados, setSoloValidados] = useState(false);
   const [nivelFiltro, setNivelFiltro] = useState("Todos");
-  const [prioridadFiltro, setPrioridadFiltro] = useState("Todas");
+  const [departamentoFiltro, setDepartamentoFiltro] = useState("Todos");
+  const [tipoFiltro, setTipoFiltro] = useState("Todos");
+  const [tipologiaFiltro, setTipologiaFiltro] = useState("Todos");
   const [selectedKey, setSelectedKey] = useState(null);
 
   useEffect(() => {
@@ -31,16 +33,31 @@ export default function Home() {
       .catch(() => setData([]));
   }, []);
 
-  useEffect(() => {
+  const toggleTema = (t) => {
+    setTemasFiltro((prev) =>
+      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
+    );
+  };
+
+  const restablecerFiltros = () => {
+    setTemasFiltro(TEMAS);
+    setSearch("");
+    setSoloValidados(false);
+    setNivelFiltro("Todos");
+    setDepartamentoFiltro("Todos");
+    setTipoFiltro("Todos");
+    setTipologiaFiltro("Todos");
     setSelectedKey(null);
-  }, [tema]);
+  };
 
   const filteredByTema = useMemo(() => {
     if (!data) return [];
-    let rows = data.filter((r) => r.tema === tema && r.lat != null && r.lng != null);
+    let rows = data.filter((r) => temasFiltro.includes(r.tema) && r.lat != null && r.lng != null);
     if (soloValidados) rows = rows.filter((r) => r.validado);
     if (nivelFiltro !== "Todos") rows = rows.filter((r) => r.nivel === nivelFiltro);
-    if (prioridadFiltro !== "Todas") rows = rows.filter((r) => r.prioridad === prioridadFiltro);
+    if (departamentoFiltro !== "Todos") rows = rows.filter((r) => r.departamento === departamentoFiltro);
+    if (tipoFiltro !== "Todos") rows = rows.filter((r) => r.tipo === tipoFiltro);
+    if (tipologiaFiltro !== "Todos") rows = rows.filter((r) => (r.tipologia_propuesta || r.tipologia) === tipologiaFiltro);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       rows = rows.filter(
@@ -51,7 +68,7 @@ export default function Home() {
       );
     }
     return rows;
-  }, [data, tema, soloValidados, nivelFiltro, prioridadFiltro, search]);
+  }, [data, temasFiltro, soloValidados, nivelFiltro, departamentoFiltro, tipoFiltro, tipologiaFiltro, search]);
 
   const locations = useMemo(() => {
     const map = new Map();
@@ -76,7 +93,21 @@ export default function Home() {
   }, [filteredByTema, selectedKey]);
 
   const selectedLocation = locations.find((l) => l.key === selectedKey);
-  const meta = THEME_META[tema];
+
+  const departamentos = useMemo(() => {
+    if (!data) return [];
+    return [...new Set(data.map((r) => r.departamento))].filter(Boolean).sort();
+  }, [data]);
+
+  const tipos = useMemo(() => {
+    if (!filteredByTema.length) return [];
+    return [...new Set(filteredByTema.map((r) => r.tipo))].filter(Boolean).sort();
+  }, [filteredByTema]);
+
+  const tipologias = useMemo(() => {
+    if (!filteredByTema.length) return [];
+    return [...new Set(filteredByTema.map((r) => r.tipologia_propuesta || r.tipologia))].filter(Boolean).sort();
+  }, [filteredByTema]);
 
   return (
     <div className="h-full flex flex-col">
@@ -91,24 +122,6 @@ export default function Home() {
               detalle · resto del país como reporte preliminar
             </p>
           </div>
-          <div className="flex gap-1 rounded-full bg-slate-100 p-1 self-start">
-            {TEMAS.map((t) => {
-              const m = THEME_META[t];
-              const active = t === tema;
-              return (
-                <button
-                  key={t}
-                  onClick={() => setTema(t)}
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                    active ? "text-white" : "text-slate-600 hover:bg-white"
-                  }`}
-                  style={active ? { background: m.color } : undefined}
-                >
-                  {m.label}
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -118,6 +131,27 @@ export default function Home() {
             placeholder="Buscar producto, municipio o tipología…"
             className="w-full max-w-xs rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-slate-400"
           />
+
+          <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+            {TEMAS.map((t) => {
+              const m = THEME_META[t];
+              const active = temasFiltro.includes(t);
+              return (
+                <button
+                  key={t}
+                  onClick={() => toggleTema(t)}
+                  className={`rounded px-2 py-1.5 text-sm font-medium transition-colors ${
+                    active ? "text-white" : "text-slate-600 hover:bg-white"
+                  }`}
+                  style={active ? { background: m.color } : undefined}
+                  title={`${active ? "Quitar" : "Agregar"} ${m.label}`}
+                >
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+
           <select
             value={nivelFiltro}
             onChange={(e) => setNivelFiltro(e.target.value)}
@@ -128,16 +162,40 @@ export default function Home() {
             <option>Capital</option>
             <option>Municipio</option>
           </select>
+
           <select
-            value={prioridadFiltro}
-            onChange={(e) => setPrioridadFiltro(e.target.value)}
+            value={departamentoFiltro}
+            onChange={(e) => setDepartamentoFiltro(e.target.value)}
             className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
           >
-            <option value="Todas">Toda prioridad</option>
-            <option value="ALTA">Prioridad alta</option>
-            <option value="MEDIA">Prioridad media</option>
-            <option value="OK">OK</option>
+            <option value="Todos">Todos los departamentos</option>
+            {departamentos.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
           </select>
+
+          <select
+            value={tipoFiltro}
+            onChange={(e) => setTipoFiltro(e.target.value)}
+            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+          >
+            <option value="Todos">Todos los tipos</option>
+            {tipos.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+
+          <select
+            value={tipologiaFiltro}
+            onChange={(e) => setTipologiaFiltro(e.target.value)}
+            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+          >
+            <option value="Todos">Todas las tipologías</option>
+            {tipologias.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+
           <label className="flex items-center gap-1.5 text-sm text-slate-600">
             <input
               type="checkbox"
@@ -145,8 +203,18 @@ export default function Home() {
               onChange={(e) => setSoloValidados(e.target.checked)}
               className="rounded border-slate-300"
             />
-            Solo validados (Atlántico)
+            Solo validados
           </label>
+
+          {(temasFiltro.length < TEMAS.length || search || soloValidados || nivelFiltro !== "Todos" || departamentoFiltro !== "Todos" || tipoFiltro !== "Todos" || tipologiaFiltro !== "Todos") && (
+            <button
+              onClick={restablecerFiltros}
+              className="text-sm font-medium text-slate-500 hover:text-slate-800 px-2 py-1.5 rounded-lg hover:bg-slate-100"
+            >
+              ↻ Restablecer
+            </button>
+          )}
+
           {selectedKey && (
             <button
               onClick={() => setSelectedKey(null)}
@@ -155,6 +223,7 @@ export default function Home() {
               ✕ Quitar selección de mapa
             </button>
           )}
+
           <span className="ml-auto text-xs text-slate-400">
             {filteredByTema.length.toLocaleString("es-CO")} productos · {locations.length.toLocaleString("es-CO")} ubicaciones
           </span>
@@ -166,7 +235,7 @@ export default function Home() {
           {data ? (
             <MapView
               locations={locations}
-              activeTema={tema}
+              filteredData={filteredByTema}
               selectedKey={selectedKey}
               onSelect={(key) => setSelectedKey((prev) => (prev === key ? null : key))}
             />
@@ -180,7 +249,7 @@ export default function Home() {
         <aside className="w-full lg:w-[420px] border-t lg:border-t-0 lg:border-l border-slate-200 bg-slate-50 flex flex-col min-h-0">
           <div className="px-4 py-3 border-b border-slate-200 bg-white">
             <h2 className="text-sm font-semibold text-slate-800">
-              {selectedLocation ? selectedLocation.entidad : `Fichas de ${meta.label}`}
+              {selectedLocation ? selectedLocation.entidad : "Fichas de productos"}
             </h2>
             <p className="text-xs text-slate-500">
               {selectedLocation
