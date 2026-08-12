@@ -148,7 +148,7 @@ export default function Home() {
         const maxLat = Math.max(...lats);
         const minLng = Math.min(...lngs);
         const maxLng = Math.max(...lngs);
-        const padding = Math.max(maxLat - minLat, maxLng - minLng) * 0.3;
+        const padding = Math.max(maxLat - minLat, maxLng - minLng) * 0.8;
         setMapBounds([[minLat - padding, minLng - padding], [maxLat + padding, maxLng + padding]]);
       }
     }
@@ -169,111 +169,115 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
-            {TEMAS.map((t) => {
-              const m = THEME_META[t];
-              const active = temasFiltro.includes(t);
-              return (
-                <button
-                  key={t}
-                  onClick={() => toggleTema(t)}
-                  className={`rounded px-2 py-1.5 text-sm font-medium transition-colors ${
-                    active ? "text-white" : "text-slate-600 hover:bg-white"
-                  }`}
-                  style={active ? { background: m.color } : undefined}
-                  title={`${active ? "Quitar" : "Agregar"} ${m.label}`}
-                >
-                  {m.label}
-                </button>
-              );
-            })}
-          </div>
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+              {TEMAS.map((t) => {
+                const m = THEME_META[t];
+                const active = temasFiltro.includes(t);
+                return (
+                  <button
+                    key={t}
+                    onClick={() => toggleTema(t)}
+                    className={`rounded px-2 py-1.5 text-sm font-medium transition-colors ${
+                      active ? "text-white" : "text-slate-600 hover:bg-white"
+                    }`}
+                    style={active ? { background: m.color } : undefined}
+                    title={`${active ? "Quitar" : "Agregar"} ${m.label}`}
+                  >
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
 
-          <select
-            value={departamentoFiltro}
-            onChange={(e) => setDepartamentoFiltro(e.target.value)}
-            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-          >
-            <option value="Todos">Todos los departamentos</option>
-            {departamentos.map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-
-          {municipios.length > 0 && (
             <select
-              value={municipioFiltro}
-              onChange={(e) => setMunicipioFiltro(e.target.value)}
+              value={departamentoFiltro}
+              onChange={(e) => setDepartamentoFiltro(e.target.value)}
               className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
             >
-              <option value="Todos">Todos los municipios</option>
-              {municipios.map((m) => (
-                <option key={m} value={m}>{m}</option>
+              <option value="Todos">Todos los departamentos</option>
+              {departamentos.map((d) => (
+                <option key={d} value={d}>{d}</option>
               ))}
             </select>
-          )}
 
-          <select
-            value={tipoFiltro}
-            onChange={(e) => setTipoFiltro(e.target.value)}
-            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-          >
-            <option value="Todos">Todos los tipos</option>
-            {tipos.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+            {municipios.length > 0 && (
+              <select
+                value={municipioFiltro}
+                onChange={(e) => setMunicipioFiltro(e.target.value)}
+                className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+              >
+                <option value="Todos">Todos los municipios</option>
+                {municipios.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            )}
 
-          <select
-            value={tipologiaFiltro}
-            onChange={(e) => setTipologiaFiltro(e.target.value)}
-            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-          >
-            <option value="Todos">Todas las tipologías</option>
-            {tipologias.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+            <select
+              value={tipoFiltro}
+              onChange={(e) => setTipoFiltro(e.target.value)}
+              className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+            >
+              <option value="Todos">Todos los tipos</option>
+              {tipos.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
 
-          <label className="flex items-center gap-1.5 text-sm text-slate-600">
+            <select
+              value={tipologiaFiltro}
+              onChange={(e) => setTipologiaFiltro(e.target.value)}
+              className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+            >
+              <option value="Todos">Todas las tipologías</option>
+              {tipologias.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+
+            <label className="flex items-center gap-1.5 text-sm text-slate-600">
+              <input
+                type="checkbox"
+                checked={soloValidados}
+                onChange={(e) => setSoloValidados(e.target.checked)}
+                className="rounded border-slate-300"
+              />
+              Solo validados
+            </label>
+
+            <span className="ml-auto text-xs text-slate-400">
+              {filteredByTema.length.toLocaleString("es-CO")} productos · {locations.length.toLocaleString("es-CO")} ubicaciones
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
             <input
-              type="checkbox"
-              checked={soloValidados}
-              onChange={(e) => setSoloValidados(e.target.checked)}
-              className="rounded border-slate-300"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar…"
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-slate-400"
             />
-            Solo validados
-          </label>
 
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar…"
-            className="max-w-xs rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-slate-400"
-          />
+            {(temasFiltro.length < TEMAS.length || search || soloValidados || departamentoFiltro !== "Todos" || municipioFiltro !== "Todos" || tipoFiltro !== "Todos" || tipologiaFiltro !== "Todos") && (
+              <button
+                onClick={restablecerFiltros}
+                className="text-sm font-medium text-slate-500 hover:text-slate-800 px-2 py-1.5 rounded-lg hover:bg-slate-100"
+              >
+                ↻ Restablecer
+              </button>
+            )}
 
-          {(temasFiltro.length < TEMAS.length || search || soloValidados || departamentoFiltro !== "Todos" || municipioFiltro !== "Todos" || tipoFiltro !== "Todos" || tipologiaFiltro !== "Todos") && (
-            <button
-              onClick={restablecerFiltros}
-              className="text-sm font-medium text-slate-500 hover:text-slate-800 px-2 py-1.5 rounded-lg hover:bg-slate-100"
-            >
-              ↻ Restablecer
-            </button>
-          )}
-
-          {selectedKey && (
-            <button
-              onClick={() => setSelectedKey(null)}
-              className="text-sm font-medium text-slate-500 hover:text-slate-800"
-            >
-              ✕ Quitar selección de mapa
-            </button>
-          )}
-
-          <span className="ml-auto text-xs text-slate-400">
-            {filteredByTema.length.toLocaleString("es-CO")} productos · {locations.length.toLocaleString("es-CO")} ubicaciones
-          </span>
+            {selectedKey && (
+              <button
+                onClick={() => setSelectedKey(null)}
+                className="text-sm font-medium text-slate-500 hover:text-slate-800"
+              >
+                ✕ Quitar selección de mapa
+              </button>
+            )}
+          </div>
         </div>
       </header>
 

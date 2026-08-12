@@ -1,9 +1,8 @@
 "use client";
-import { THEME_META, PRIORIDAD_META } from "@/lib/theme";
+import { THEME_META } from "@/lib/theme";
 
 export default function ProductCard({ item }) {
   const theme = THEME_META[item.tema];
-  const prio = item.prioridad ? PRIORIDAD_META[item.prioridad] : null;
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
@@ -22,11 +21,6 @@ export default function ProductCard({ item }) {
           ) : (
             <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-500">
               Sin validar
-            </span>
-          )}
-          {prio && (
-            <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${prio.cls}`}>
-              {prio.label}
             </span>
           )}
         </div>
