@@ -29,9 +29,6 @@ export default function ProductCard({ item }) {
       <h3 className="mt-2 text-sm font-semibold text-slate-900 leading-snug">
         {item.producto_corregido || item.producto}
       </h3>
-      {item.producto_corregido && item.producto_corregido !== item.producto && (
-        <p className="text-xs text-slate-400 line-clamp-1">Reportado como: {item.producto}</p>
-      )}
 
       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
         <span>
@@ -47,20 +44,10 @@ export default function ProductCard({ item }) {
         {item.nivel && <span className="text-slate-400"> ({item.nivel})</span>}
       </div>
 
-      {(item.alerta_duplicado === "SI" || item.producto_compartido === "SI") && (
-        <div className="mt-2 space-y-1">
-          {item.alerta_duplicado === "SI" && (
-            <div className="rounded-lg bg-pink-50 border border-pink-200 px-2 py-1 text-xs text-pink-700">
-              <span className="font-medium">Posible duplicado.</span>{" "}
-              <span className="line-clamp-2">{item.detalle_alerta}</span>
-            </div>
-          )}
-          {item.producto_compartido === "SI" && (
-            <div className="rounded-lg bg-sky-50 border border-sky-200 px-2 py-1 text-xs text-sky-700">
-              <span className="font-medium">Producto compartido.</span>{" "}
-              <span className="line-clamp-2">{item.detalle_compartido}</span>
-            </div>
-          )}
+      {item.producto_compartido === "SI" && (
+        <div className="mt-2 rounded-lg bg-sky-50 border border-sky-200 px-2 py-1 text-xs text-sky-700">
+          <span className="font-medium">Producto compartido.</span>{" "}
+          <span className="line-clamp-2">{item.detalle_compartido}</span>
         </div>
       )}
 
