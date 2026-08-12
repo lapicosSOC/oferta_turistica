@@ -162,6 +162,11 @@ export default function Home() {
     setTipologiaFiltro("Todos");
   }, [tipoFiltro]);
 
+  useEffect(() => {
+    setTipoFiltro("Todos");
+    setTipologiaFiltro("Todos");
+  }, [temasFiltro]);
+
   return (
     <div className="h-full flex flex-col">
       <header className="border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
