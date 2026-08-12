@@ -9,6 +9,8 @@ function MapContent({ locations, filteredData, selectedKey, onSelect, bounds }) 
   useEffect(() => {
     if (bounds) {
       map.fitBounds(bounds, { padding: [50, 50] });
+    } else {
+      map.setView([4.6, -74.2], 6);
     }
   }, [bounds, map]);
   const temasByLocation = useMemo(() => {
